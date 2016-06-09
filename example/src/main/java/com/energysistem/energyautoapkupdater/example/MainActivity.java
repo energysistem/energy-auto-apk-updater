@@ -22,14 +22,18 @@
  * THE SOFTWARE.
  */
 
-package com.energysistem.energyautoapkupdater.lib.business.downloader.events;
+package com.energysistem.energyautoapkupdater.example;
 
-/**
- * Created by HMD on 08/06/2016.
- *
- * This event is intended to occur once the download is completed
- */
-public interface OnDownloadCompleted
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+
+public class MainActivity extends AppCompatActivity
 {
-    void onDownloadCompleted(boolean success, String file_location);
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+    }
 }

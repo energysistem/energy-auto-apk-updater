@@ -24,8 +24,12 @@
 
 package com.energysistem.energyautoapkupdater.lib;
 
+import com.energysistem.energyautoapkupdater.lib.business.downloader.Downloader;
+import com.energysistem.energyautoapkupdater.lib.business.downloader.events.OnDownloadCompleted;
+import com.energysistem.energyautoapkupdater.lib.business.events.OnUpdateCompleted;
+import com.energysistem.energyautoapkupdater.lib.business.events.OnUpdateFailed;
 import com.energysistem.energyautoapkupdater.lib.business.exceptions.NullOrEmptyURLException;
-import com.energysistem.energyautoapkupdater.lib.business.exceptions.ShellException;
+import com.energysistem.energyautoapkupdater.lib.business.log.Log;
 import com.energysistem.energyautoapkupdater.lib.business.shell.Shell;
 import com.energysistem.energyautoapkupdater.lib.business.shell.events.OnExecutionFinished;
 
@@ -39,6 +43,15 @@ import java.io.IOException;
  */
 public final class Updater
 {
+    private final String TAG = this.getClass().getName();
+    /**
+     * On update failed object
+     **/
+    private OnUpdateFailed onUpdateFailed;
+    /**
+     * On update completed object
+     **/
+    private OnUpdateCompleted onUpdateCompleted;
     /**
      * This is the URL where the apk file is going to be downloaded.
      * */
@@ -47,7 +60,9 @@ public final class Updater
      * Object that holds the shell
      * */
     private Shell shell;
-
+    /**
+     * Updater constructor
+     **/
     public Updater()
     {
         shell = new Shell();
@@ -73,28 +88,62 @@ public final class Updater
      *
      * @throws NullOrEmptyURLException This exception occurs if the URL is not set or is empty.
      * */
-    public void update() throws NullOrEmptyURLException, ShellException
+    public void update() throws NullOrEmptyURLException
     {
         if (getUrl() == null || getUrl().isEmpty())
             throw new NullOrEmptyURLException("URL is not set or is empty.");
 
-        try
-        {
-            shell.init();
-        }
-        catch (IOException e)
-        {
-            throw new ShellException("Shell can't be initialized: " + e.getMessage());
-        }
-//      Set post execution action
-        shell.setOnExecutionFinished(new OnExecutionFinished()
+//      Download the file
+        Downloader downloader = new Downloader(url);
+        downloader.setOnDownloadCompleted(new OnDownloadCompleted()
         {
             @Override
-            public void onExecutionFinished(int result)
+            public void onDownloadCompleted(boolean success, String file_location)
             {
-                //TODO: add action to what will occur once the command is finished
+                if (!success)
+                {
+                    Log.log(TAG, "Download failed.", Log.Type.ERROR);
+                    if (onUpdateFailed != null)
+                        onUpdateFailed.onUpdateFailed();
+                    return;
+                }
+
+                try
+                {
+                    shell.init();
+//                  Set post execution action
+                    shell.setOnExecutionFinished(new OnExecutionFinished()
+                    {
+                        @Override
+                        public void onExecutionFinished(int result)
+                        {
+                            Log.log(TAG, "Command executed successfully!.", Log.Type.INFO);
+                            if (result == 0)
+                            {
+                                if (onUpdateCompleted != null)
+                                    onUpdateCompleted.onUpdateCompleted();
+                            }
+                            else
+                            {
+                                Log.log(TAG, "Something went wrong with the Package Manager, please try later. Check PM log for more information.", Log.Type.ERROR);
+                                if (onUpdateFailed != null)
+                                    onUpdateFailed.onUpdateFailed();
+                            }
+                        }
+                    });
+//                  Execute installation command
+                    String command = "pm install " + file_location;
+                    shell.executeCommand(command);
+                }
+                catch (IOException e)
+                {
+                    Log.log(TAG, "Unable to use the shell. " + e.getMessage(), Log.Type.ERROR);
+                }
+                catch (InterruptedException e)
+                {
+                    Log.log(TAG, "Shell thread stopped. " + e.getMessage(), Log.Type.ERROR);
+                }
             }
         });
-        //TODO: Download apk file
     }
 }

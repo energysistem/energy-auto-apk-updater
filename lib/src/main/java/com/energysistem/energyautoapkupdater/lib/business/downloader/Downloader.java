@@ -25,7 +25,10 @@
 package com.energysistem.energyautoapkupdater.lib.business.downloader;
 
 import com.energysistem.energyautoapkupdater.lib.business.downloader.events.OnDownloadCompleted;
+import com.energysistem.energyautoapkupdater.lib.business.log.Log;
+import com.energysistem.energyautoapkupdater.lib.business.threads.ErrorHandlerThread;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -39,6 +42,7 @@ import java.net.URL;
  */
 public class Downloader
 {
+    final String TAG = this.getClass().getName();
     /**
      * URL where file is located
      * */
@@ -59,7 +63,9 @@ public class Downloader
      * Event object
      * */
     private OnDownloadCompleted onDownloadCompleted;
-
+    /**
+     *  Public constructor
+     **/
     public Downloader(String url)
     {
         this.url = url;
@@ -83,14 +89,69 @@ public class Downloader
         this.url = url;
     }
     /**
+     * Downloads certain information form a web server and stores it in a specified location
      *
+     * @param destination_path Path where the information/file will be stored
      **/
-    public void download(String destination_path) throws IOException
+    private void download(String destination_path) throws IOException
     {
         URL _url = new URL(url);
         connection = (HttpURLConnection) _url.openConnection();
-        //TODO: finish method
+        connection.connect();
+//      Check for info availability
+        if (connection.getResponseCode() != HttpURLConnection.HTTP_OK)
+        {
+            Log.log(TAG, "Content is unavailable", Log.Type.ERROR);
+//          Unable to get information form server, call event with false argument
+            if (onDownloadCompleted != null)
+                onDownloadCompleted.onDownloadCompleted(false, null);
+            return;
+        }
 
+        is = connection.getInputStream();
+        os = new FileOutputStream(destination_path);
+
+//      Set buffer size to read each time, 2048 bytes should be enough
+        byte[] buffer = new byte[2048];
+
+        while (is.available() > 0)
+        {
+            is.read(buffer, 0, buffer.length);
+            os.write(buffer, 0, buffer.length);
+        }
+
+//      Once finished we close the streams
+        is.close();
+        os.close();
+
+//      Call event
+        Log.log(TAG, "Download complete", Log.Type.INFO);
+        if (onDownloadCompleted != null)
+            onDownloadCompleted.onDownloadCompleted(true, destination_path);
+    }
+    /**
+     * Start the download on an asynchronous thread, set OnDownloadComplete to
+     * provide a post download action and download result.
+     *
+     * @param url Information/File URL
+     **/
+    public void startDownload(final String url)
+    {
+        new ErrorHandlerThread()
+        {
+            @Override
+            public void run()
+            {
+                try
+                {
+                    Downloader.this.download(url);
+                }
+                catch (IOException e)
+                {
+                    throw  new RuntimeException(e.getMessage());
+                }
+            }
+        }.start();
     }
 
     public void setOnDownloadCompleted(OnDownloadCompleted onDownloadCompleted)

@@ -24,6 +24,7 @@
 
 package com.energysistem.energyautoapkupdater.lib.business.shell;
 
+import com.energysistem.energyautoapkupdater.lib.business.shell.events.OnExecutionFailed;
 import com.energysistem.energyautoapkupdater.lib.business.shell.events.OnExecutionFinished;
 import com.energysistem.energyautoapkupdater.lib.business.threads.ErrorHandlerThread;
 
@@ -49,6 +50,10 @@ public class Shell
      * Event of command execution finished
      **/
     private OnExecutionFinished onExecutionFinished;
+    /**
+     * Event of command execution failed
+     **/
+    private OnExecutionFailed onExecutionFailed;
 
     public Shell() {}
 
@@ -82,6 +87,8 @@ public class Shell
                 }
                 catch (IOException | InterruptedException e)
                 {
+                    if (onExecutionFailed != null)
+                        onExecutionFailed.onCommandExecutionFailed(e);
 //                  Once caught throw a RuntimeException to allow the Thread to do further actions
                     throw new RuntimeException(e.getMessage());
                 }

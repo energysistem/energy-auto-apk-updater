@@ -30,8 +30,8 @@ import com.energysistem.energyautoapkupdater.lib.business.log.Log;
  * Created by HMD on 08/06/2016.
  *
  * Customized thread to handle server services. This thread contains an
- * exception object that points to any posible exception occured during
- * the execution's process. Everytime an exception occurs, this thread will
+ * exception object that points to any possible exception occurred during
+ * the execution's process. Every time an exception occurs, this thread will
  * throw a RuntimeException to stop execution and handled exception
  * will be stored. RuntimeExceptions will be automatically caught
  * and executed code may be overridden in the method onException.
@@ -83,7 +83,7 @@ public class ErrorHandlerThread extends Thread
         @Override
         public void uncaughtException(Thread t, Throwable e)
         {
-            //Unhandled exception occurred, so sad! :(
+//          Unhandled exception occurred, so sad! :(
             ErrorHandlerThread.this.onException(e);
         }
     }

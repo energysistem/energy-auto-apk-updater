@@ -22,14 +22,14 @@
  * THE SOFTWARE.
  */
 
-package com.energysistem.energyautoapkupdater.lib.business.downloader.events;
+package com.energysistem.energyautoapkupdater.lib.business.events;
 
 /**
- * Created by HMD on 08/06/2016.
+ * Created by HMD on 09/06/2016.
  *
- * This event is intended to occur once the download is completed
+ * Occurs once the update is completed
  */
-public interface OnDownloadCompleted
+public interface OnUpdateCompleted
 {
-    void onDownloadCompleted(boolean success, String file_location);
+    void onUpdateCompleted();
 }
