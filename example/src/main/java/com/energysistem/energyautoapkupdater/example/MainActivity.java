@@ -24,16 +24,58 @@
 
 package com.energysistem.energyautoapkupdater.example;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.support.v7.app.AppCompatActivity;
+import android.widget.Toast;
+
+import com.energysistem.energyautoapkupdater.lib.Updater;
+import com.energysistem.energyautoapkupdater.lib.business.events.OnUpdateCompleted;
+import com.energysistem.energyautoapkupdater.lib.business.events.OnUpdateFailed;
+import com.energysistem.energyautoapkupdater.lib.business.exceptions.NullOrEmptyURLException;
+import com.energysistem.energyautoapkupdater.lib.business.log.Log;
 
 public class MainActivity extends AppCompatActivity
 {
+    private Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+//      initialize handler
+        handler = new Handler(Looper.getMainLooper());
+
+        Updater updater = new Updater();
+        updater.setUrl("http://10.42.0.1:80/update.apk");
+        updater.setOnUpdateCompleted(new OnUpdateCompleted()
+        {
+            @Override
+            public void onUpdateCompleted()
+            {
+                Toast.makeText(MainActivity.this, "Actualizado!", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        updater.setOnUpdateFailed(new OnUpdateFailed()
+        {
+            @Override
+            public void onUpdateFailed(final Exception ex)
+            {
+                Toast.makeText(MainActivity.this, "Error! " + ex.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+
+        try
+        {
+            updater.update(this);
+        }
+        catch (NullOrEmptyURLException e)
+        {
+            Log.log("Example App", "Malformed URL", Log.Type.ERROR);
+        }
     }
 }

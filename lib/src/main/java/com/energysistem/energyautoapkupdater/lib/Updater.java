@@ -24,14 +24,20 @@
 
 package com.energysistem.energyautoapkupdater.lib;
 
+import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
+
 import com.energysistem.energyautoapkupdater.lib.business.downloader.Downloader;
 import com.energysistem.energyautoapkupdater.lib.business.downloader.events.OnDownloadCompleted;
 import com.energysistem.energyautoapkupdater.lib.business.events.OnUpdateCompleted;
 import com.energysistem.energyautoapkupdater.lib.business.events.OnUpdateFailed;
 import com.energysistem.energyautoapkupdater.lib.business.exceptions.NullOrEmptyURLException;
+import com.energysistem.energyautoapkupdater.lib.business.installer.Installer;
+import com.energysistem.energyautoapkupdater.lib.business.installer.InstallerFactory;
+import com.energysistem.energyautoapkupdater.lib.business.installer.events.OnInstallationFailed;
+import com.energysistem.energyautoapkupdater.lib.business.installer.shell.Shell;
 import com.energysistem.energyautoapkupdater.lib.business.log.Log;
-import com.energysistem.energyautoapkupdater.lib.business.shell.Shell;
-import com.energysistem.energyautoapkupdater.lib.business.shell.events.OnExecutionFinished;
 
 import java.io.IOException;
 
@@ -43,6 +49,11 @@ import java.io.IOException;
  */
 public final class Updater
 {
+    /**
+     * Handler
+     **/
+    private Handler handler;
+
     private final String TAG = this.getClass().getName();
     /**
      * On update failed object
@@ -65,7 +76,7 @@ public final class Updater
      **/
     public Updater()
     {
-        shell = new Shell();
+        shell = new Shell("pm");
     }
     /**
      * Retrieves the URl where is the apk file located.
@@ -88,8 +99,10 @@ public final class Updater
      *
      * @throws NullOrEmptyURLException This exception occurs if the URL is not set or is empty.
      * */
-    public void update() throws NullOrEmptyURLException
+    public void update(final Context context) throws NullOrEmptyURLException
     {
+        handler = new Handler(Looper.myLooper());
+
         if (getUrl() == null || getUrl().isEmpty())
             throw new NullOrEmptyURLException("URL is not set or is empty.");
 
@@ -104,46 +117,40 @@ public final class Updater
                 {
                     Log.log(TAG, "Download failed.", Log.Type.ERROR);
                     if (onUpdateFailed != null)
-                        onUpdateFailed.onUpdateFailed();
+                        onUpdateFailed.onUpdateFailed(new IOException("File couldn't be downloaded, check log for more information"));
                     return;
                 }
 
-                try
+                Installer installer = InstallerFactory.build(context);
+                installer.setOnInstallationFailed(new OnInstallationFailed()
                 {
-                    shell.init();
-//                  Set post execution action
-                    shell.setOnExecutionFinished(new OnExecutionFinished()
+                    @Override
+                    public void onInstallationFailed(final Exception ex)
                     {
-                        @Override
-                        public void onExecutionFinished(int result)
+                        handler.post(new Runnable()
                         {
-                            Log.log(TAG, "Command executed successfully!.", Log.Type.INFO);
-                            if (result == 0)
+                            @Override
+                            public void run()
                             {
-                                if (onUpdateCompleted != null)
-                                    onUpdateCompleted.onUpdateCompleted();
-                            }
-                            else
-                            {
-                                Log.log(TAG, "Something went wrong with the Package Manager, please try later. Check PM log for more information.", Log.Type.ERROR);
                                 if (onUpdateFailed != null)
-                                    onUpdateFailed.onUpdateFailed();
+                                    onUpdateFailed.onUpdateFailed(ex);
                             }
-                        }
-                    });
-//                  Execute installation command
-                    String command = "pm install " + file_location;
-                    shell.executeCommand(command);
-                }
-                catch (IOException e)
-                {
-                    Log.log(TAG, "Unable to use the shell. " + e.getMessage(), Log.Type.ERROR);
-                }
-                catch (InterruptedException e)
-                {
-                    Log.log(TAG, "Shell thread stopped. " + e.getMessage(), Log.Type.ERROR);
-                }
+                        });
+                    }
+                });
+                installer.install(file_location);
             }
         });
+        downloader.startDownload(context);
+    }
+
+    public void setOnUpdateCompleted(OnUpdateCompleted onUpdateCompleted)
+    {
+        this.onUpdateCompleted = onUpdateCompleted;
+    }
+
+    public void setOnUpdateFailed(OnUpdateFailed onUpdateFailed)
+    {
+        this.onUpdateFailed = onUpdateFailed;
     }
 }

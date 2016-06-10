@@ -22,14 +22,12 @@
  * THE SOFTWARE.
  */
 
-package com.energysistem.energyautoapkupdater.lib.business.events;
+package com.energysistem.energyautoapkupdater.lib.business.installer.events;
 
 /**
- * Created by HMD on 09/06/2016.
- *
- * Occurs when th update fails
+ * Created by HMD on 10/06/2016.
  */
-public interface OnUpdateFailed
+public interface OnInstallationSuccess
 {
-    void onUpdateFailed(Exception ex);
+    void onInstalationSuccess();
 }

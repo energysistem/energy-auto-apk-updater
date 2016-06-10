@@ -22,10 +22,9 @@
  * THE SOFTWARE.
  */
 
-package com.energysistem.energyautoapkupdater.lib.business.shell;
+package com.energysistem.energyautoapkupdater.lib.business.installer.shell;
 
-import com.energysistem.energyautoapkupdater.lib.business.shell.events.OnExecutionFailed;
-import com.energysistem.energyautoapkupdater.lib.business.shell.events.OnExecutionFinished;
+import com.energysistem.energyautoapkupdater.lib.business.installer.A_Installer;
 import com.energysistem.energyautoapkupdater.lib.business.threads.ErrorHandlerThread;
 
 import java.io.DataOutputStream;
@@ -36,40 +35,41 @@ import java.io.IOException;
  *
  * This class is intended to handle the communication with the shell
  */
-public class Shell
+public class Shell extends A_Installer
 {
     /**
-     * Super user process that will execute commands
+     * Process that will execute commands
      * */
-    private Process su;
+    private Process process;
+    /**
+     * Application name that will execute commands
+     **/
+    private String app;
     /**
      * Stream to write in the shell
      **/
     private DataOutputStream dos;
-    /**
-     * Event of command execution finished
-     **/
-    private OnExecutionFinished onExecutionFinished;
-    /**
-     * Event of command execution failed
-     **/
-    private OnExecutionFailed onExecutionFailed;
 
-    public Shell() {}
-
+    public Shell(String app)
+    {
+        this.app = app;
+    }
     /**
      * Initializes the shell in Super user
      **/
-    public void init() throws IOException
+    private void init() throws IOException
     {
-        su = Runtime.getRuntime().exec("su");
-        dos = new DataOutputStream(su.getOutputStream());
+        process = Runtime.getRuntime().exec(app);
+        dos = new DataOutputStream(process.getOutputStream());
     }
     /**
-     * Executes a command in the shell in  anew thread and waits for it.
+     * Executes a command in the shell in a new thread and waits for it.
      **/
-    public void executeCommand(String command) throws IOException, InterruptedException
+    private void executeCommand(String command) throws IOException, InterruptedException
     {
+        if (process == null || dos == null)
+            throw new IOException("Shell isn't initialized.");
+
         final String final_command = command;
         new ErrorHandlerThread()
         {
@@ -80,15 +80,16 @@ public class Shell
                 {
                     dos.writeBytes(final_command);
                     dos.flush();
-                    int result = su.waitFor();
+                    int result = process.waitFor();
 //                  Call event
-                    if (onExecutionFinished != null)
-                        onExecutionFinished.onExecutionFinished(result);
+                    if (result != 1)
+                        notifyInstallationFailed(new Exception("Unexpected PM result."));
+                    else
+                        notifyInstallationSuccess();
                 }
                 catch (IOException | InterruptedException e)
                 {
-                    if (onExecutionFailed != null)
-                        onExecutionFailed.onCommandExecutionFailed(e);
+                    notifyInstallationFailed(e);
 //                  Once caught throw a RuntimeException to allow the Thread to do further actions
                     throw new RuntimeException(e.getMessage());
                 }
@@ -96,11 +97,22 @@ public class Shell
         }.start();
 
     }
-    /**
-     * Implement execution finished event.
-     * */
-    public void setOnExecutionFinished(OnExecutionFinished onExecutionFinished)
+
+    @Override
+    public void install(String apk_path)
     {
-        this.onExecutionFinished = onExecutionFinished;
+        try
+        {
+            init();
+            executeCommand("install" + apk_path);
+        }
+        catch (IOException e)
+        {
+            notifyInstallationFailed(e);
+        }
+        catch (InterruptedException e)
+        {
+            notifyInstallationFailed(e);
+        }
     }
 }

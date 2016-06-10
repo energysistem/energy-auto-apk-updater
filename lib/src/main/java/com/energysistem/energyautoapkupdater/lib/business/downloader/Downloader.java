@@ -24,6 +24,9 @@
 
 package com.energysistem.energyautoapkupdater.lib.business.downloader;
 
+import android.content.Context;
+import android.os.Environment;
+
 import com.energysistem.energyautoapkupdater.lib.business.downloader.events.OnDownloadCompleted;
 import com.energysistem.energyautoapkupdater.lib.business.log.Log;
 import com.energysistem.energyautoapkupdater.lib.business.threads.ErrorHandlerThread;
@@ -65,6 +68,8 @@ public class Downloader
     private OnDownloadCompleted onDownloadCompleted;
     /**
      *  Public constructor
+     *
+     *  @param url URL of the information/File to download
      **/
     public Downloader(String url)
     {
@@ -111,13 +116,13 @@ public class Downloader
         is = connection.getInputStream();
         os = new FileOutputStream(destination_path);
 
-//      Set buffer size to read each time, 2048 bytes should be enough
-        byte[] buffer = new byte[2048];
-
-        while (is.available() > 0)
+//      Set buffer size to read each time, 4096 bytes should be enough
+        byte[] buffer = new byte[4096];
+        int bytes_read = -1;
+        while ((bytes_read = is.read(buffer)) != -1)
         {
-            is.read(buffer, 0, buffer.length);
-            os.write(buffer, 0, buffer.length);
+            os.write(buffer, 0, bytes_read);
+            os.flush();
         }
 
 //      Once finished we close the streams
@@ -132,10 +137,8 @@ public class Downloader
     /**
      * Start the download on an asynchronous thread, set OnDownloadComplete to
      * provide a post download action and download result.
-     *
-     * @param url Information/File URL
      **/
-    public void startDownload(final String url)
+    public void startDownload(final Context context)
     {
         new ErrorHandlerThread()
         {
@@ -144,11 +147,12 @@ public class Downloader
             {
                 try
                 {
-                    Downloader.this.download(url);
+                    String destination_path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/update.apk";
+                    Downloader.this.download(destination_path);
                 }
                 catch (IOException e)
                 {
-                    throw  new RuntimeException(e.getMessage());
+                    throw new RuntimeException(e.getMessage());
                 }
             }
         }.start();

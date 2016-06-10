@@ -22,19 +22,30 @@
  * THE SOFTWARE.
  */
 
-package com.energysistem.energyautoapkupdater.lib.business.shell.events;
+package com.energysistem.energyautoapkupdater.lib.business.installer;
+
+import com.energysistem.energyautoapkupdater.lib.business.installer.events.OnInstallationFailed;
+import com.energysistem.energyautoapkupdater.lib.business.installer.events.OnInstallationSuccess;
 
 /**
- * Created by HMD on 08/06/2016.
+ * Created by HMD on 10/06/2016.
  *
- * This event is intended to occur once the execution of a command in the shell finishes
+ * Installer interface
  */
-public interface OnExecutionFinished
+public interface Installer
 {
     /**
-     * To be called when the command execution finishes.
-     *
-     * @param result The execution result
+     * Install the given apk file using whether shell or package manager interface
      * */
-    void onExecutionFinished(int result);
+    void install(String apk_path);
+
+    /**
+     * Set the event that occurs when installation fails
+     **/
+    public void setOnInstallationFailed(OnInstallationFailed onInstallationFailed);
+
+    /**
+     * Set the event that occurs when installation succeeds
+     **/
+    public void setOnInstallationSuccess(OnInstallationSuccess onInstallationSuccess);
 }

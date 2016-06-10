@@ -22,14 +22,37 @@
  * THE SOFTWARE.
  */
 
-package com.energysistem.energyautoapkupdater.lib.business.shell.events;
+package com.energysistem.energyautoapkupdater.lib.business.installer.packagemanager;
+
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+
+import com.energysistem.energyautoapkupdater.lib.business.installer.A_Installer;
+
+import java.io.File;
 
 /**
- * Created by HMD on 09/06/2016.
- *
- * Occurs when the execution of the command fails
+ * Created by HMD on 10/06/2016.
  */
-public interface OnExecutionFailed
+public class PackageManager extends A_Installer
 {
-    void onCommandExecutionFailed(Exception ex);
+    /**
+     * Application context
+     **/
+    private Context context;
+
+    public PackageManager(Context context)
+    {
+        this.context = context;
+    }
+
+    @Override
+    public void install(String apk_path)
+    {
+        Intent install = new Intent(Intent.ACTION_VIEW);
+        install.setDataAndType(Uri.fromFile(new File(apk_path)),
+                "application/vnd.android.package-archive");
+        context.startActivity(install);
+    }
 }

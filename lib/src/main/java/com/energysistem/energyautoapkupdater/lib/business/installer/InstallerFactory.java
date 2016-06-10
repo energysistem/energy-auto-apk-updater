@@ -22,14 +22,22 @@
  * THE SOFTWARE.
  */
 
-package com.energysistem.energyautoapkupdater.lib.business.events;
+package com.energysistem.energyautoapkupdater.lib.business.installer;
+
+import android.content.Context;
+
+import com.energysistem.energyautoapkupdater.lib.business.installer.packagemanager.PackageManager;
 
 /**
- * Created by HMD on 09/06/2016.
+ * Created by HMD on 10/06/2016.
  *
- * Occurs when th update fails
+ * Installer factory
  */
-public interface OnUpdateFailed
+public class InstallerFactory
 {
-    void onUpdateFailed(Exception ex);
+    public static Installer build(Context context)
+    {
+        //TODO: Implement shell installation
+        return new PackageManager(context);
+    }
 }
