@@ -26,6 +26,8 @@ package com.energysistem.energyautoapkupdater.lib.business.installer.events;
 
 /**
  * Created by HMD on 10/06/2016.
+ *
+ * Intended to be executed when installation success
  */
 public interface OnInstallationSuccess
 {

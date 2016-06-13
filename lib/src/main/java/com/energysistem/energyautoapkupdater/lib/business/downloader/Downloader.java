@@ -24,7 +24,6 @@
 
 package com.energysistem.energyautoapkupdater.lib.business.downloader;
 
-import android.content.Context;
 import android.os.Environment;
 
 import com.energysistem.energyautoapkupdater.lib.business.downloader.events.OnDownloadCompleted;
@@ -138,7 +137,7 @@ public class Downloader
      * Start the download on an asynchronous thread, set OnDownloadComplete to
      * provide a post download action and download result.
      **/
-    public void startDownload(final Context context)
+    public void startDownload()
     {
         new ErrorHandlerThread()
         {

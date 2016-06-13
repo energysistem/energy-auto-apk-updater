@@ -27,6 +27,7 @@ package com.energysistem.energyautoapkupdater.lib.business.installer;
 import android.content.Context;
 
 import com.energysistem.energyautoapkupdater.lib.business.installer.packagemanager.PackageManager;
+import com.energysistem.energyautoapkupdater.lib.business.installer.shell.Shell;
 
 /**
  * Created by HMD on 10/06/2016.
@@ -35,9 +36,34 @@ import com.energysistem.energyautoapkupdater.lib.business.installer.packagemanag
  */
 public class InstallerFactory
 {
-    public static Installer build(Context context)
+    /**
+     * Builds an installer based on parameter. Installer differences:
+     *
+     * - Shell: The installer will install automatically the package
+     * - Package manager: The installer will pop the PM wizard to install the package
+     *
+     * @param context Application context
+     * @param type Tpe of installer to build
+     *
+     * @return Returns the installer
+     **/
+    public static Installer build(Context context, Type type)
     {
-        //TODO: Implement shell installation
-        return new PackageManager(context);
+        switch (type)
+        {
+            case SHELL_INSTALLER:
+                return new Shell("pm");
+
+            case PACKAGEMANAGER_INSTALLER:
+                return new PackageManager(context);
+
+            default: return null;
+        }
+    }
+
+    public enum Type
+    {
+        SHELL_INSTALLER,
+        PACKAGEMANAGER_INSTALLER
     }
 }

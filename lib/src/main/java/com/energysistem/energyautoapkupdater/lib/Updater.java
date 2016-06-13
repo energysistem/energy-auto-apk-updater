@@ -121,7 +121,7 @@ public final class Updater
                     return;
                 }
 
-                Installer installer = InstallerFactory.build(context);
+                Installer installer = InstallerFactory.build(context, InstallerFactory.Type.PACKAGEMANAGER_INSTALLER);
                 installer.setOnInstallationFailed(new OnInstallationFailed()
                 {
                     @Override
@@ -141,7 +141,7 @@ public final class Updater
                 installer.install(file_location);
             }
         });
-        downloader.startDownload(context);
+        downloader.startDownload();
     }
 
     public void setOnUpdateCompleted(OnUpdateCompleted onUpdateCompleted)

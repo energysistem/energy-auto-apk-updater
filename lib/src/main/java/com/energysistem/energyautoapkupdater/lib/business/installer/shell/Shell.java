@@ -106,11 +106,7 @@ public class Shell extends A_Installer
             init();
             executeCommand("install" + apk_path);
         }
-        catch (IOException e)
-        {
-            notifyInstallationFailed(e);
-        }
-        catch (InterruptedException e)
+        catch (IOException | InterruptedException e)
         {
             notifyInstallationFailed(e);
         }

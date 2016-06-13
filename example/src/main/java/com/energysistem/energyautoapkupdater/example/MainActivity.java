@@ -25,8 +25,6 @@
 package com.energysistem.energyautoapkupdater.example;
 
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
@@ -38,16 +36,12 @@ import com.energysistem.energyautoapkupdater.lib.business.log.Log;
 
 public class MainActivity extends AppCompatActivity
 {
-    private Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-//      initialize handler
-        handler = new Handler(Looper.getMainLooper());
 
         Updater updater = new Updater();
         updater.setUrl("http://10.42.0.1:80/update.apk");
