@@ -29,7 +29,8 @@ package com.energysistem.energyautoapkupdater.lib.business.downloader.events;
  *
  * This event is intended to occur once the download is completed
  */
-public interface OnDownloadCompleted
+public interface OnDownload
 {
-    void onDownloadCompleted(boolean success, String file_location);
+    void onDownloadCompleted(String file_location);
+    void onDownloadFailed(String error);
 }

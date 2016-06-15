@@ -26,7 +26,7 @@ package com.energysistem.energyautoapkupdater.lib.business.downloader;
 
 import android.os.Environment;
 
-import com.energysistem.energyautoapkupdater.lib.business.downloader.events.OnDownloadCompleted;
+import com.energysistem.energyautoapkupdater.lib.business.downloader.events.OnDownload;
 import com.energysistem.energyautoapkupdater.lib.business.log.Log;
 import com.energysistem.energyautoapkupdater.lib.business.threads.ErrorHandlerThread;
 
@@ -64,7 +64,7 @@ public class Downloader
     /**
      * Event object
      * */
-    private OnDownloadCompleted onDownloadCompleted;
+    private OnDownload onDownload;
     /**
      *  Public constructor
      *
@@ -105,10 +105,11 @@ public class Downloader
 //      Check for info availability
         if (connection.getResponseCode() != HttpURLConnection.HTTP_OK)
         {
-            Log.log(TAG, "Content is unavailable", Log.Type.ERROR);
+            String message = "Content is unavailable";
+            Log.log(TAG, message, Log.Type.ERROR);
 //          Unable to get information form server, call event with false argument
-            if (onDownloadCompleted != null)
-                onDownloadCompleted.onDownloadCompleted(false, null);
+            if (onDownload != null)
+                onDownload.onDownloadFailed(message);
             return;
         }
 
@@ -130,8 +131,8 @@ public class Downloader
 
 //      Call event
         Log.log(TAG, "Download complete", Log.Type.INFO);
-        if (onDownloadCompleted != null)
-            onDownloadCompleted.onDownloadCompleted(true, destination_path);
+        if (onDownload != null)
+            onDownload.onDownloadCompleted(destination_path);
     }
     /**
      * Start the download on an asynchronous thread, set OnDownloadComplete to
@@ -154,11 +155,19 @@ public class Downloader
                     throw new RuntimeException(e.getMessage());
                 }
             }
+
+            @Override
+            public void onException(Throwable e)
+            {
+                super.onException(e);
+                if (onDownload != null)
+                    onDownload.onDownloadFailed(e.getMessage());
+            }
         }.start();
     }
 
-    public void setOnDownloadCompleted(OnDownloadCompleted onDownloadCompleted)
+    public void setOnDownload(OnDownload onDownload)
     {
-        this.onDownloadCompleted = onDownloadCompleted;
+        this.onDownload = onDownload;
     }
 }

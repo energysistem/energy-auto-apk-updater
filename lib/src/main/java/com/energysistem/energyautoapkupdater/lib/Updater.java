@@ -29,7 +29,7 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.energysistem.energyautoapkupdater.lib.business.downloader.Downloader;
-import com.energysistem.energyautoapkupdater.lib.business.downloader.events.OnDownloadCompleted;
+import com.energysistem.energyautoapkupdater.lib.business.downloader.events.OnDownload;
 import com.energysistem.energyautoapkupdater.lib.business.events.OnUpdateCompleted;
 import com.energysistem.energyautoapkupdater.lib.business.events.OnUpdateFailed;
 import com.energysistem.energyautoapkupdater.lib.business.exceptions.NullOrEmptyURLException;
@@ -77,6 +77,7 @@ public final class Updater
     public Updater()
     {
         shell = new Shell("pm");
+        handler = new Handler(Looper.myLooper());
     }
     /**
      * Retrieves the URl where is the apk file located.
@@ -101,26 +102,16 @@ public final class Updater
      * */
     public void update(final Context context) throws NullOrEmptyURLException
     {
-        handler = new Handler(Looper.myLooper());
-
         if (getUrl() == null || getUrl().isEmpty())
             throw new NullOrEmptyURLException("URL is not set or is empty.");
 
 //      Download the file
         Downloader downloader = new Downloader(url);
-        downloader.setOnDownloadCompleted(new OnDownloadCompleted()
+        downloader.setOnDownload(new OnDownload()
         {
             @Override
-            public void onDownloadCompleted(boolean success, String file_location)
+            public void onDownloadCompleted(String file_location)
             {
-                if (!success)
-                {
-                    Log.log(TAG, "Download failed.", Log.Type.ERROR);
-                    if (onUpdateFailed != null)
-                        onUpdateFailed.onUpdateFailed(new IOException("File couldn't be downloaded, check log for more information"));
-                    return;
-                }
-
                 Installer installer = InstallerFactory.build(context, InstallerFactory.Type.PACKAGEMANAGER_INSTALLER);
                 installer.setOnInstallationFailed(new OnInstallationFailed()
                 {
@@ -139,6 +130,21 @@ public final class Updater
                     }
                 });
                 installer.install(file_location);
+            }
+
+            @Override
+            public void onDownloadFailed(final String error)
+            {
+                handler.post(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        Log.log(TAG, "Download failed.", Log.Type.ERROR);
+                        if (onUpdateFailed != null)
+                            onUpdateFailed.onUpdateFailed(new IOException("File couldn't be downloaded, " + error));
+                    }
+                });
             }
         });
         downloader.startDownload();

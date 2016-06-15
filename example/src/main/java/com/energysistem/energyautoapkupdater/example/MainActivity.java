@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         Updater updater = new Updater();
-        updater.setUrl("http://10.42.0.1:80/update.apk");
+        updater.setUrl("ksj");
         updater.setOnUpdateCompleted(new OnUpdateCompleted()
         {
             @Override
