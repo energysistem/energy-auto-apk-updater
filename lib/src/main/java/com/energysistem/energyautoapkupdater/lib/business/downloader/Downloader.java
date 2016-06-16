@@ -27,6 +27,7 @@ package com.energysistem.energyautoapkupdater.lib.business.downloader;
 import android.os.Environment;
 
 import com.energysistem.energyautoapkupdater.lib.business.downloader.events.OnDownload;
+import com.energysistem.energyautoapkupdater.lib.business.exceptions.NullOrEmptyURLException;
 import com.energysistem.energyautoapkupdater.lib.business.log.Log;
 import com.energysistem.energyautoapkupdater.lib.business.threads.ErrorHandlerThread;
 
@@ -97,8 +98,10 @@ public class Downloader
      *
      * @param destination_path Path where the information/file will be stored
      **/
-    private void download(String destination_path) throws IOException
-    {
+    private void download(String destination_path) throws IOException, NullOrEmptyURLException {
+        if (getUrl() == null || getUrl().isEmpty())
+            throw new NullOrEmptyURLException("URL is not set or is empty.");
+
         URL _url = new URL(url);
         connection = (HttpURLConnection) _url.openConnection();
         connection.connect();
@@ -150,7 +153,7 @@ public class Downloader
                     String destination_path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/update.apk";
                     Downloader.this.download(destination_path);
                 }
-                catch (IOException e)
+                catch (IOException | NullOrEmptyURLException e)
                 {
                     throw new RuntimeException(e.getMessage());
                 }

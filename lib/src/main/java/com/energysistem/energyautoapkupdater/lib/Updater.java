@@ -31,7 +31,6 @@ import android.os.Looper;
 import com.energysistem.energyautoapkupdater.lib.business.downloader.Downloader;
 import com.energysistem.energyautoapkupdater.lib.business.downloader.events.OnDownload;
 import com.energysistem.energyautoapkupdater.lib.business.events.OnUpdateCompleted;
-import com.energysistem.energyautoapkupdater.lib.business.events.OnUpdateFailed;
 import com.energysistem.energyautoapkupdater.lib.business.exceptions.NullOrEmptyURLException;
 import com.energysistem.energyautoapkupdater.lib.business.installer.Installer;
 import com.energysistem.energyautoapkupdater.lib.business.installer.InstallerFactory;
@@ -55,10 +54,6 @@ public final class Updater
     private Handler handler;
 
     private final String TAG = this.getClass().getName();
-    /**
-     * On update failed object
-     **/
-    private OnUpdateFailed onUpdateFailed;
     /**
      * On update completed object
      **/
@@ -100,11 +95,8 @@ public final class Updater
      *
      * @throws NullOrEmptyURLException This exception occurs if the URL is not set or is empty.
      * */
-    public void update(final Context context) throws NullOrEmptyURLException
+    public void update(final Context context)
     {
-        if (getUrl() == null || getUrl().isEmpty())
-            throw new NullOrEmptyURLException("URL is not set or is empty.");
-
 //      Download the file
         Downloader downloader = new Downloader(url);
         downloader.setOnDownload(new OnDownload()
@@ -113,23 +105,31 @@ public final class Updater
             public void onDownloadCompleted(String file_location)
             {
                 Installer installer = InstallerFactory.build(context, InstallerFactory.Type.PACKAGEMANAGER_INSTALLER);
-                installer.setOnInstallationFailed(new OnInstallationFailed()
+                if (installer != null)
                 {
-                    @Override
-                    public void onInstallationFailed(final Exception ex)
+                    installer.setOnInstallationFailed(new OnInstallationFailed()
                     {
-                        handler.post(new Runnable()
+                        @Override
+                        public void onInstallationFailed(final Exception ex)
                         {
-                            @Override
-                            public void run()
+                            handler.post(new Runnable()
                             {
-                                if (onUpdateFailed != null)
-                                    onUpdateFailed.onUpdateFailed(ex);
-                            }
-                        });
-                    }
-                });
-                installer.install(file_location);
+                                @Override
+                                public void run()
+                                {
+                                    if (onUpdateCompleted != null)
+                                        onUpdateCompleted.onUpdateFailed(ex);
+                                }
+                            });
+                        }
+                    });
+                    installer.install(file_location);
+                }
+                else
+                {
+                    Log.log(TAG, "Null installer", Log.Type.ERROR);
+                }
+
             }
 
             @Override
@@ -141,8 +141,8 @@ public final class Updater
                     public void run()
                     {
                         Log.log(TAG, "Download failed.", Log.Type.ERROR);
-                        if (onUpdateFailed != null)
-                            onUpdateFailed.onUpdateFailed(new IOException("File couldn't be downloaded, " + error));
+                        if (onUpdateCompleted != null)
+                            onUpdateCompleted.onUpdateFailed(new IOException("File couldn't be downloaded, " + error));
                     }
                 });
             }
@@ -153,10 +153,5 @@ public final class Updater
     public void setOnUpdateCompleted(OnUpdateCompleted onUpdateCompleted)
     {
         this.onUpdateCompleted = onUpdateCompleted;
-    }
-
-    public void setOnUpdateFailed(OnUpdateFailed onUpdateFailed)
-    {
-        this.onUpdateFailed = onUpdateFailed;
     }
 }
