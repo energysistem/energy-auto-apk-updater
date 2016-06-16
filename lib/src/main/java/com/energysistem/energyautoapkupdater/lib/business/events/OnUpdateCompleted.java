@@ -32,4 +32,5 @@ package com.energysistem.energyautoapkupdater.lib.business.events;
 public interface OnUpdateCompleted
 {
     void onUpdateCompleted();
+    void onUpdateFailed(Exception ex);
 }

@@ -30,9 +30,6 @@ import android.widget.Toast;
 
 import com.energysistem.energyautoapkupdater.lib.Updater;
 import com.energysistem.energyautoapkupdater.lib.business.events.OnUpdateCompleted;
-import com.energysistem.energyautoapkupdater.lib.business.events.OnUpdateFailed;
-import com.energysistem.energyautoapkupdater.lib.business.exceptions.NullOrEmptyURLException;
-import com.energysistem.energyautoapkupdater.lib.business.log.Log;
 
 public class MainActivity extends AppCompatActivity
 {
@@ -44,18 +41,16 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
 
         Updater updater = new Updater();
-        updater.setUrl("ksj");
+        updater.setUrl("http://fake.url");
+
         updater.setOnUpdateCompleted(new OnUpdateCompleted()
         {
             @Override
             public void onUpdateCompleted()
             {
-                Toast.makeText(MainActivity.this, "Actualizado!", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "Updated!", Toast.LENGTH_LONG).show();
             }
-        });
 
-        updater.setOnUpdateFailed(new OnUpdateFailed()
-        {
             @Override
             public void onUpdateFailed(final Exception ex)
             {
@@ -63,13 +58,6 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        try
-        {
-            updater.update(this);
-        }
-        catch (NullOrEmptyURLException e)
-        {
-            Log.log("Example App", "Malformed URL", Log.Type.ERROR);
-        }
+        updater.update(this);
     }
 }
